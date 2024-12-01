@@ -1,0 +1,251 @@
+export const getDataTableCode = (dbData) => {
+    if (!dbData.data_cols) {
+      throw new Error('data_cols is not defined in dbData');
+    }
+
+    
+    const crudcontrols = dbData.data_datacrud.map(col => col.trim()); 
+    const controloptions = dbData.data_options.map(col => col.trim()); 
+ 
+    const columns = dbData.data_cols.map(col => col.trim());
+  
+    let arrcol = [];
+    columns.forEach((value) => {
+      arrcol.push(value);
+    });
+  
+    let tableInitCode = `
+  $(document).ready(function() {
+    var table = $('#miTabla').DataTable({
+    ajax: {
+          url: 'crudclass.php',
+      method: 'GET',
+      dataType: 'json',
+      success: function(data) {
+        table.clear();
+        table.rows.add(data).draw();
+      },
+      error: function(jqXHR, textStatus, errorThrown) {
+        console.error('Error en la solicitud AJAX:', textStatus, errorThrown);
+      }
+      },
+      dom: 'Bfrtip',
+      buttons: [
+        'copyHtml5',
+        'excelHtml5',
+        'csvHtml5',
+        'pdfHtml5',
+        'print'
+      ],
+      columns: [`;
+  
+    columns.forEach((column) => {
+      tableInitCode += `
+        { title: '${column}', data: '${column}' },`;
+    });
+  
+    if (dbData.data_dbcrud === 'YES') {
+      tableInitCode += `
+        { title: 'actions', render: function (data, type, row) {
+           return \` <button class="btn btn-danger deleteBtn"  >Eliminar</button>
+            <button class="btn btn-primary" onclick="abrirModalEdicion(\${row.id})">Editar</button>
+                  \`;
+                 }},`;
+    }
+  
+    tableInitCode += `
+      ]
+    });
+   
+  
+    // Delegación de eventos para botones agregar
+    $('.data_addbtn').button().on('click', function() {
+      abrirModalAgregar();
+    });
+  
+    function abrirModalAgregar() {
+      $('#formAgregarUsuario').empty();
+      var rowData = ${JSON.stringify(arrcol)};
+      if (rowData.length <= 10) {
+        var formHtml = '';
+        rowData.forEach((value, key) => {
+          formHtml += \`
+            <div class="mb-3">
+              <label for="\${key}" class="form-label">\${value}</label>
+              <input type="text" class="form-control form-control-sm" id="\${key}" name="\${value}" value="">
+            </div>\`;
+        });
+      } else {
+        var formHtml = '<div class="row">';
+        rowData.forEach((value, i) => {
+          var colHtml = \`
+            <div class="col-md-6">
+              <div class="row mb-3">
+                <label for="\${i}" class="col-sm-2 col-form-label">\${value}</label>
+                <div class="col-sm-10">
+                  <input type="text" class="form-control form-control-sm" id="\${i}" name="\${value}" value="">
+                </div>
+              </div>
+            </div>\`;
+          formHtml += colHtml;
+        });
+        formHtml += '</div>';
+      }
+      $('#formAgregarUsuario').append(formHtml);
+      $('#agregarUsuarioModal').modal('show');
+    }
+ 
+  
+    $('#miTabla').on('click', '.editBtn', function() {
+      var rowData = table.row($(this).parents('tr')).data();
+      abrirModalEdicion(rowData);
+    });
+  
+    $('#miTabla').on('click', '.deleteBtn', function() {
+      var rowData = table.row($(this).parents('tr')).data();
+      var deleteId = rowData['${dbData.data_primaryKey}'];
+      $.ajax({
+        url: 'crudclass.php?${dbData.data_primaryKey}=' + deleteId,
+        method: 'DELETE',
+        dataType: 'json',
+        success: function(data) {
+          console.log('DELETE Success', data);
+          mostrarSuccessCard('bg-danger', 'Operación Exitosa', 'eliminado con éxito.');
+        },
+        error: function(jqXHR, textStatus, errorThrown) {
+          console.error('Error en la solicitud DELETE:', textStatus, errorThrown);
+        }
+      });
+    });
+  
+
+    window.abrirModalEdicion = function(id) {
+      var rowData = table.row(function (idx, data, node) {
+          return data.id === id;
+      }).data();
+      
+      if (!rowData) {
+          console.error('No se encontró la fila con id:', id);
+          return;
+      }
+      
+      $('#formEditarUsuario').empty();
+      var formHtml = '';
+    
+      if (Object.keys(rowData).length <= 10) {
+          for (var key in rowData) {
+              if (rowData.hasOwnProperty(key)) {
+                  formHtml += \`
+                      <div class="mb-3">
+                          <label for="\${key}" class="form-label">\${key}</label>
+                          <input type="text" class="form-control" id="\${key}" name="\${key}" value="\${rowData[key]}">
+                      </div>\`;
+              }
+          }
+      } else {
+          formHtml = '<div class="row">';
+          for (var key in rowData) {
+              if (rowData.hasOwnProperty(key)) {
+                  var colHtml = \`
+                      <div class="col-md-6">
+                          <div class="row mb-3">
+                              <label for="\${key}" class="col-sm-2 col-form-label">\${key}</label>
+                              <div class="col-sm-10">
+                                  <input type="text" class="form-control" id="\${key}" name="\${key}" value="\${rowData[key]}">
+                              </div>
+                          </div>
+                      </div>\`;
+                  formHtml += colHtml;
+              }
+          }
+          formHtml += '</div>';
+      }
+    
+      $('#formEditarUsuario').append(formHtml);
+      $('#editarUsuarioModal').modal('show');
+    };
+    
+     });
+
+    $('#guardarEdicionUsuarioBtn').on('click', function() {
+      guardarEdicionUsuario();
+  });
+
+  function guardarEdicionUsuario() {
+      var editedData = {};
+      $('#formEditarUsuario input').each(function() {
+          var fieldName = $(this).attr('name');
+          var fieldValue = $(this).val();
+          editedData[fieldName] = fieldValue;
+      });
+
+      $.ajax({
+          url: 'crudclass.php?id=' + editedData['id'],
+          method: 'PUT',
+          contentType: 'application/json',
+          data: JSON.stringify(editedData),
+          dataType: 'json',
+          success: function(data) {
+            //  table.ajax.reload(); // Recargar los datos de la tabla
+              mostrarSuccessCard('bg-success', 'Operación Exitosa', 'Operación Exitosa.');
+              $('#editarUsuarioModal').modal('hide');
+          },
+          error: function(jqXHR, textStatus, errorThrown) {
+              console.error('Error en la solicitud PUT:', textStatus, errorThrown);
+          }
+      });
+  }
+ 
+    function guardarNuevoUsuario() {
+      var addData = {};
+      $('#formAgregarUsuario input').each(function() {
+        var fieldName = $(this).attr('name');
+        var fieldValue = $(this).val();
+        addData[fieldName] = fieldValue;
+      });
+      $.ajax({
+        url: 'crudclass.php?${dbData.data_primaryKey}=' + addData['${dbData.data_primaryKey}'],
+        method: 'POST',
+        contentType: 'application/json',
+        data: JSON.stringify(addData),
+        dataType: 'json',
+        success: function(data) {
+          console.log('POST Success', data);
+          mostrarSuccessCard('bg-success', 'Operación Exitosa', 'El registro ha sido actualizado con éxito.');
+        },
+        error: function(jqXHR, textStatus, errorThrown) {
+          console.error('Error en la solicitud POST:', textStatus, errorThrown);
+        }
+      });
+      $('#AgregarUsuarioModal').modal('hide');
+    }
+  
+  
+
+   
+
+    // Función para mostrar la tarjeta de éxito
+    function mostrarSuccessCard(color, title, message) {
+    Swal.fire({
+    position: "top-end",
+    icon: "success",
+    title: message,
+    showConfirmButton: false,
+    timer: 1500
+     }).then(function() {
+       setTimeout(function() {
+       location.reload();
+    }, 350);
+  });
+}
+
+ 
+
+ 
+
+ 
+  `;
+  
+    return tableInitCode;
+  };
+  
