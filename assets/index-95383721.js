@@ -40,6 +40,19 @@ https://github.com/nodeca/pako/blob/main/LICENSE
     <script type="text/javascript" src="https://cdn.datatables.net/buttons/2.2.2/js/buttons.html5.min.js"><\/script>
     <script type="text/javascript" src="https://cdn.datatables.net/buttons/2.2.2/js/buttons.print.min.js"><\/script>
     
+
+<!-- Google tag (gtag.js) -->
+<script async src="https://www.googletagmanager.com/gtag/js?id=G-S2YRDRYFWZ"><\/script>
+<script>
+  window.dataLayer = window.dataLayer || [];
+  function gtag(){dataLayer.push(arguments);}
+  gtag('js', new Date());
+
+  gtag('config', 'G-S2YRDRYFWZ');
+<\/script>
+
+
+
     </head>
 `}generateNavbar(){return`
 <body>
