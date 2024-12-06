@@ -1,0 +1,345 @@
+<script setup>
+import axios from "axios";
+import { ref } from "vue";
+const currentUrl = "../api/";
+//const currentUrl = "https://yomartinez.my.id/generador-dt/";
+
+let items = ref(0);
+
+const insRow = () => {
+  items.value++;
+  const numval = items.value;
+};
+
+const delRow = () => {
+  items.value--;
+  const numval = items.value;
+};
+
+const columnas = ref([]);
+
+const procesartabla = () => {
+  let upd = [];
+
+  const datosbd = {
+    data_bd: document.getElementById("data_bd").value,
+    data_tablename: document.getElementById("data_tablename").value,
+    data_techDB: document.getElementById("data_techDB").value,
+    data_dbusername: document.getElementById("data_dbusername").value,
+    data_dbpassword: document.getElementById("data_dbpassword").value,
+    data_dbcrud: document.getElementById("data_dbcrud").value,
+    data_addtitle: document.getElementById("data_addtitle").value,
+    data_primaryKey: document.getElementById("data_primaryKey").value,
+  };
+
+  upd.push(datosbd);
+
+  var table = document.getElementById("POITable");
+  let datostbl = [];
+  for (var r = 0, n = table.rows.length; r < n; r++) {
+    if (r > 0) {
+      datostbl.push(document.getElementById("columname" + r).value);
+    }
+  }
+  upd.push(datostbl);
+  columnas.value = upd;
+
+  console.log(columnas.value[1]);
+
+   
+    
+  axios
+    .get("http://localhost/proyectos/generador-dt/api/laravel.php", {
+      params: {
+        data_bd: columnas["value"][0].data_bd,
+        data_tablename: columnas["value"][0].data_tablename,
+        data_techDB: columnas["value"][0].data_techDB,
+        data_dbusername: columnas["value"][0].data_dbusername,
+        data_dbpassword: columnas["value"][0].data_dbpassword,
+        data_dbcrud: columnas["value"][0].data_dbcrud,
+        data_cols: columnas["value"][1].toString(),
+        data_addtitle: columnas["value"][0].data_addtitle,
+        data_primaryKey: columnas["value"][0].data_primaryKey,
+      },
+    })
+    .then((res) => {
+      console.log(res);
+    });
+   downloadFile();
+};
+
+const downloadFile = async () => {
+  try {
+    const response = await axios.get(
+       "http://localhost/proyectos/generador-dt/api/download.php",
+      {
+        params: {},
+        responseType: "blob", // Indica que esperamos una respuesta binaria (blob)
+      }
+    );
+
+    // Crea un objeto Blob con los datos recibidos
+    const blob = new Blob([response.data], { type: "application/zip" });
+
+    // Crea un enlace (link) para descargar el archivo
+    const link = document.createElement("a");
+    link.href = window.URL.createObjectURL(blob);
+    link.download = "project.zip";
+
+    // Agrega el enlace al DOM y simula un clic
+    document.body.appendChild(link);
+    link.click();
+
+    // Limpia el enlace del DOM después de la descarga
+    document.body.removeChild(link);
+  } catch (error) {
+    console.error("Error al descargar el archivo", error);
+  }
+};
+
+// Llama a la función downloadFile
+
+// Llama a la función downloadFile
+</script>
+
+
+ 
+<template>
+  <title>Checkout example · Bootstrap v5.0</title>
+
+  <link
+    rel="canonical"
+    href="https://getbootstrap.com/docs/5.0/examples/checkout/"
+  />
+
+  <!-- Bootstrap core CSS -->
+  <!-- <link href="../node_modules/bootstrap/dist/css/bootstrap.min.css" rel="stylesheet">-->
+  <link href="api/assets/css/bootstrap.min.css" rel="stylesheet" />
+
+  <!-- Custom styles for this template -->
+
+  <div class="main">
+    <div class="py-5 text-center">
+      <img
+        class="d-block mx-auto mb-4"
+        src="./assets/logo.svg"
+        alt=""
+        width="72"
+        height="57"
+      />
+      <h2>Simple Datatable Generator</h2>
+      <p class="lead">Is a simple datatable with Bootstrap’s form controls.</p>
+    </div>
+
+    <form class="needs-validation" novalidate @submit.prevent="onSubmit">
+      <!-- /.row -->
+
+      <div class="row">
+        <div class="form-group col-sm-4">
+          <label class="form-label" for="data_bd">Nombre BD</label>
+          <input
+            type="text"
+            class="form-control"
+            name="data_bd"
+            id="data_bd"
+            width="100%"
+            required="true"
+          />
+        </div>
+        <div class="form-group col-sm-4">
+          <label class="form-label">Nombre Tabla</label>
+          <input
+            type="text"
+            class="form-control"
+            name="data_tablename"
+            id="data_tablename"
+            width="100%"
+            required="true"
+          />
+        </div>
+
+        <div class="form-group col-sm-4">
+          <label class="form-label">Tipo de Conexion DB</label>
+          <select name="data_techDB" id="data_techDB" class="form-select">
+            <option value="MySQL">MySQL / MariaDB</option>
+            <option>PostgreSQL</option>
+            <option>SQL Server</option>
+          </select>
+        </div>
+      </div>
+      <!-- /.row -->
+
+      <div class="row">
+        <div class="form-group col-sm-4">
+          <label class="form-label">DB username</label>
+          <input
+            type="text"
+            class="form-control"
+            name="data_dbusername"
+            id="data_dbusername"
+            required
+          />
+          <div class="invalid-feedback">Valid first name is required.</div>
+        </div>
+
+        <div class="form-group col-sm-4">
+          <label class="form-label">DB password</label>
+          <input
+            type="text"
+            name="data_dbpassword"
+            id="data_dbpassword"
+            class="form-control"
+            placeholder=""
+            value=""
+            required
+          />
+          <div class="invalid-feedback">Valid first name is required.</div>
+        </div>
+
+        <div class="form-group col-sm-4">
+          <label class="form-label">Add Crud Buttons</label>
+
+          <select name="data_dbcrud" id="data_dbcrud" class="form-select">
+            <option>----------</option>
+            <option>YES</option>
+            <option>NO</option>
+          </select>
+        </div>
+
+        <!-- /.row -->
+
+        <div class="row">
+          <div class="form-group col-sm-4">
+            <label class="form-label" for="data_primaryKey">Primary Key</label>
+            <input
+              type="text"
+              placeholder="id"
+              class="form-control"
+              name="data_primaryKey"
+              id="data_primaryKey"
+              width="100%"
+              required="true"
+            />
+          </div>
+          <div class="form-group col-sm-4">
+            <label class="form-label" for="data_addtitle">Page title</label>
+            <input
+              type="text"
+              class="form-control"
+              name="data_addtitle"
+              id="data_addtitle"
+              width="100%"
+              required="true"
+            />
+          </div>
+
+          <div class="form-group col-sm-4"></div>
+        </div>
+        <!-- /.row -->
+
+        <div class="col-12">
+          <label class="form-label">Form / table</label>
+          <div>
+            <!-- TABLE OPTIONS -->
+
+            <div id="POItablediv" class="table-responsive">
+              <input
+                type="button"
+                id="addmorePOIbutton"
+                value="Agregar +"
+                @click="insRow()"
+              />
+
+              <table id="POITable" class="table table-striped" border="1">
+                <thead>
+                  <tr>
+                    <th>#</th>
+                    <th>colum name</th>
+
+                    <th>Delete?</th>
+                  </tr>
+                </thead>
+                <tbody>
+                  <tr v-for="item of items" :id="'tr' + item">
+                    <td>{{ item }}</td>
+                    <td>
+                      <input
+                        size="25"
+                        type="text"
+                        :name="'columname' + item"
+                        :id="'columname' + item"
+                        class="form-control"
+                      />
+                    </td>
+
+                    <td>
+                      <input
+                        type="button"
+                        value="  Delete  "
+                        @click="delRow()"
+                        class="btn btn-secondary btn-sm"
+                      />
+                    </td>
+                  </tr>
+                </tbody>
+              </table>
+            </div>
+
+            <!-- END TABLE OPTIONS -->
+          </div>
+        </div>
+      </div>
+
+      <hr class="my-4" />
+
+      <button
+        class="w-100 btn btn-primary btn-lg"
+        @click="procesartabla()"
+        type="submit"
+      >
+        Procesar Ahora
+      </button>
+    </form>
+
+    <footer class="my-5 pt-5 text-muted text-center text-small">
+      <p class="mb-1">&copy; 2024 Autor: Yovani Martinez</p>
+      <ul class="list-inline">
+        <li class="list-inline-item"><a href="#">Privacy</a></li>
+        <li class="list-inline-item"><a href="#">Terms</a></li>
+        <li class="list-inline-item"><a href="#">Support</a></li>
+      </ul>
+    </footer>
+  </div>
+</template>
+ 
+<style scoped>
+.bd-placeholder-img {
+  font-size: 1.125rem;
+  text-anchor: middle;
+  -webkit-user-select: none;
+  -moz-user-select: none;
+  user-select: none;
+}
+
+@media (min-width: 768px) {
+  .bd-placeholder-img-lg {
+    font-size: 3.5rem;
+  }
+}
+
+.main {
+  width: 100%;
+
+  max-width: 1280px;
+  margin: 0 auto;
+}
+
+tr td select,
+tr td input,
+tr td,
+tr {
+  height: 1.7rem;
+  font-size: 14px;
+  padding: 0;
+}
+</style>
